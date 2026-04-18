@@ -1,0 +1,6 @@
+chromadb
+openai
+pandas
+matplotlib
+requests
+python-dotenv
