@@ -52,7 +52,7 @@ def decide_action(obs, past_reflections=None, randomness=0.0):
         amt = min(t_demand, remaining)
         allocs["fuel_to_transport"] = amt
         remaining -= amt
-        reasons.append("Prioritizing transport bottleneck clearance")
+        reasons.append("Critical: Clearing transport bottleneck to restore global logistics efficiency")
 
     # ── Rule 2: Allocate remaining budget by weighted priority ────────────
     # Hospital first
@@ -60,32 +60,39 @@ def decide_action(obs, past_reflections=None, randomness=0.0):
         amt = min(h_demand, remaining)
         allocs["fuel_to_hospital"] = amt
         remaining -= amt
-        reasons.append("Stabilizing critical hospital demand")
+        reasons.append(f"High Priority: Allocating {amt} units to stabilize critical hospital systems")
 
     # Emergency second
     if remaining > 0 and e_demand > 0:
         amt = min(e_demand, remaining)
         allocs["fuel_to_emergency"] = amt
         remaining -= amt
-        reasons.append("Supporting emergency response services")
+        reasons.append("Supporting emergency response teams for regional safety")
 
     # Transport maintenance
     if remaining > 0 and t_demand > 0 and t_demand <= 5:
         amt = min(t_demand, remaining)
         allocs["fuel_to_transport"] = amt
         remaining -= amt
-        reasons.append("Maintaining supply chain stability")
+        reasons.append("Maintaining transport infrastructure to prevent future bottlenecks")
 
     # Residential last
     if remaining > 0 and r_demand > 0:
         amt = min(r_demand, remaining)
         allocs["fuel_to_residential"] = amt
         remaining -= amt
-        reasons.append("Managing residential grid load")
+        reasons.append("Managing residential energy distribution for civil stability")
+
+    # Final logic for idle steps
+    if sum(allocs.values()) == 0:
+        if any(d > 0 for d in [h_demand, e_demand, t_demand, r_demand]):
+            reasons.append("Resource management: Conserving fuel for future high-demand steps")
+        else:
+            reasons.append("Strategic stability: All demands satisfied, holding remaining reserves")
 
     # ── Rule 3: Apply controlled randomness (±10%) for Near-Expert ──────────
     if randomness > 0:
-        reasons.append(f"Applying {randomness*100}% strategic variation")
+        reasons.append(f"Applying {int(randomness*100)}% strategic variance for exploration")
         total_fuel = sum(allocs.values())
         if total_fuel > 0:
             for k in allocs:
@@ -98,5 +105,5 @@ def decide_action(obs, past_reflections=None, randomness=0.0):
                 factor = fuel / new_total
                 for k in allocs: allocs[k] = int(allocs[k] * factor)
 
-    reasoning = "; ".join(reasons) if reasons else "Maintaining baseline allocation"
+    reasoning = "; ".join(reasons) if reasons else "Maintaining baseline crisis stability"
     return allocs, reasoning

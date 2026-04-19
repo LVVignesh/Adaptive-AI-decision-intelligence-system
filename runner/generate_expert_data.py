@@ -24,8 +24,11 @@ SYSTEM_PROMPT = (
 )
 
 def build_llama_instruction(state: dict, action: dict, reasoning: str) -> dict:
-    """Format a state+action+reasoning triplet for fine-tuning."""
+    """Format a state+action+reasoning triplet for elite fine-tuning."""
+    # Enriched Prompt suggested by review
     user_prompt = (
+        f"Given the current crisis state, allocate fuel optimally to "
+        f"maximize stability while minimizing waste.\n\n"
         f"State: {json.dumps(state)}\n"
         f"What is the optimal fuel allocation for this step?"
     )
@@ -45,15 +48,18 @@ def run_expert_generation():
     # Initialize counts
     counts = {t: {"expert": 0, "near_expert": 0} for t in TASKS}
     
-    # Baseline demands for normalization (from environment.py)
+    # Baseline demands for normalization
     initial_demands = {
         "hospital": 40, "emergency": 30, "transport": 20, "residential": 15
     }
-    # Initial fuel for each difficulty
     starting_fuels = {"easy": 160, "medium": 120, "hard": 80}
 
-    print(f"Starting Phase 2A Expert Generation (Target: ~{TARGET_PER_TASK} per task)...\n")
-    print(f"Realistic Thresholds: Expert >= {EXPERT_THRESHOLD}, Near-Expert >= {SCORE_MIN}")
+    print(f"Starting Phase 2A ELITE Expert Generation (70/30 Distribution)...\n")
+    print(f"Thresholds: Expert >= {EXPERT_THRESHOLD}, Near-Expert >= {SCORE_MIN}")
+
+    # Overwrite dataset for purity
+    with open(OUTPUT_PATH, "w") as f:
+        pass
 
     with GlobalCrisisEnv() as env:
         for task in TASKS:
@@ -61,10 +67,20 @@ def run_expert_generation():
             current_expert_threshold = EXPERT_THRESHOLD
 
             while (counts[task]["expert"] + counts[task]["near_expert"]) < TARGET_PER_TASK:
-                # Fail-safe: If we are stuck, relax the expert threshold slightly
+                # ── Distribution Control ──────────────────────────────────────
+                # Target: 70% Expert, 30% Near-Expert
+                total_for_task = counts[task]["expert"] + counts[task]["near_expert"]
+                
+                # If we have enough near-experts relative to experts, hunt for pure experts
+                expert_ratio = counts[task]["expert"] / (total_for_task + 1e-6)
+                needs_expert = expert_ratio < 0.7
+                
+                # Apply noise only if we explicitly want to fill 'near-expert' capacity
+                noise_level = 0.1 if (not needs_expert and random.random() > 0.5) else 0.0
+
                 if consecutive_failures >= MAX_FAIL_SAFES:
                     current_expert_threshold = max(0.15, current_expert_threshold - 0.01)
-                    print(f"⚠️  Task {task}: Stuck. Relaxing expert threshold to {current_expert_threshold:.2f}")
+                    print(f"⚠️  Task {task}: High failure rate. Relaxing threshold to {current_expert_threshold:.2f}")
                     consecutive_failures = 0
 
                 obs = env.reset(task_id=task)
@@ -72,18 +88,17 @@ def run_expert_generation():
                 initial_fuel = starting_fuels[task]
                 total_waste = 0
                 trajectory = []
-                total_reward = 0.0
+                cumulative_reward = 0.0
 
-                # 50% chance to try for 'expert' (no noise) or 'near-expert' (noise)
-                noise_level = 0.1 if random.random() > 0.5 else 0.0
-                
                 step = 0
                 while not obs.done:
                     step += 1
+                    remaining_steps = 5 - step
                     
-                    # ── Capture ENRICHED state ──────────────────────────────────
+                    # ── Capture ELITE state ─────────────────────────────────────
                     state_capture = {
                         "total_fuel_initial": initial_fuel,
+                        "remaining_steps":    remaining_steps,
                         "fuel_available":     obs.fuel_available,
                         "fuel_ratio":        round(obs.fuel_available / initial_fuel, 3),
                         "hospital_demand":    obs.hospital_demand,
@@ -95,7 +110,8 @@ def run_expert_generation():
                         "transport_ratio":   round(obs.transport_demand / initial_demands["transport"], 3),
                         "residential_ratio": round(obs.residential_demand / initial_demands["residential"], 3),
                         "bottleneck_active":  obs.transport_demand > 5,
-                        "step_fraction":      round(step / 5.0, 1)
+                        "step_fraction":      round(step / 5.0, 1),
+                        "cumulative_reward":  round(cumulative_reward, 4)
                     }
 
                     action, reasoning = decide_action(obs, randomness=noise_level)
@@ -110,7 +126,7 @@ def run_expert_generation():
                     total_waste += step_waste
 
                     obs = env.step(action)
-                    total_reward += obs.reward
+                    cumulative_reward += obs.reward
 
                     trajectory.append({
                         "step": step,
@@ -121,7 +137,7 @@ def run_expert_generation():
                         "instruction": build_llama_instruction(state_capture, action, reasoning)
                     })
 
-                episode_score = round(total_reward / 5.0, 4)
+                episode_score = round(cumulative_reward / 5.0, 4)
                 
                 # ── Apply Strict Filters ──────────────────────────────────────
                 waste_ratio = total_waste / initial_fuel
@@ -129,6 +145,16 @@ def run_expert_generation():
                 if episode_score >= SCORE_MIN and waste_ratio <= WASTE_THRESHOLD:
                     quality = "expert" if episode_score >= current_expert_threshold else "near_expert"
                     
+                    # Check if we still need this quality type for balancing
+                    if quality == "near_expert" and not needs_expert and total_for_task > 10:
+                        # If we have enough near-experts, stay in 'expert hunt'
+                        consecutive_failures += 1
+                        continue
+
+                    # Enrich trajectory steps with the FINAL score (outcome association)
+                    for point in trajectory:
+                        point["state"]["episode_score_outcome"] = episode_score
+
                     record = {
                         "task_id": task,
                         "quality_level": quality,
@@ -142,12 +168,12 @@ def run_expert_generation():
                     
                     counts[task][quality] += 1
                     total_saved = sum(sum(q.values()) for q in counts.values())
-                    print(f"[SAVED] [{task.upper()}] Score: {episode_score} Quality: {quality} (Total: {total_saved})")
+                    print(f"[SAVED] [{task.upper()}] Score: {episode_score} Quality: {quality} (Expert Count: {counts[task]['expert']})")
                     consecutive_failures = 0
                 else:
                     consecutive_failures += 1
 
-    print(f"\nPhase 2A Complete. Final Counts:")
+    print(f"\nPhase 2A ELITE Complete. Final Counts:")
     for task, qs in counts.items():
         print(f"  - {task}: {qs['expert']} experts, {qs['near_expert']} near_experts")
 
