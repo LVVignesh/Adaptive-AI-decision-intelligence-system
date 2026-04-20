@@ -12,21 +12,9 @@
 # PHASE 2B: Replace the body of `decide_action()` with an LLM call.
 #           The function signature must remain IDENTICAL.
 # ===========================================================================
+import random
 
 def decide_action(obs, past_reflections=None, randomness=0.0):
-    """
-    Decide fuel allocation for this step based on current observation.
-
-    Strategy:
-      1. Pace fuel: spend at most (fuel_available / steps_remaining) budget per step
-      2. If transport bottleneck active (demand > 5): allocate enough to clear it
-      3. Allocate remaining by priority: Hospital > Emergency > Transport > Residential
-      4. Never over-allocate (no waste penalty)
-      5. Apply ±randomness to allow for "near_expert" variations.
-
-    PHASE 2B SWAP POINT — replace the body with: return llm_decide_action(obs, past_reflections)
-    """
-    import random
 
     fuel        = obs.fuel_available
     t_demand    = obs.transport_demand
