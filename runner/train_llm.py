@@ -20,7 +20,7 @@ def log_episode(data):
     with open(log_path, "a", encoding="utf-8") as f:
         f.write(json.dumps(data) + "\n")
 
-def run_phase_2b_training(episodes=5, task_id="hard"):
+def run_phase_2b_training(episodes=10, task_id="hard"):
     print(f"--- Starting Phase 2B: LLM Integration ({task_id}) ---")
     planner = LLMPlanner()
     memory = Memory()
@@ -30,10 +30,17 @@ def run_phase_2b_training(episodes=5, task_id="hard"):
             print(f"\n[EPISODE {ep+1}/{episodes}] Starting...")
             obs = env.reset(task_id=task_id)
             
+            initial_fuel = obs.fuel_available
             total_reward = 0
             bottleneck_ever_active = False
             bottlenecks_cleared = 0
             bottleneck_occurrences = 0
+            
+            invalid_action_count = 0
+            total_fuel_used = 0
+            fuel_wasted = 0
+            total_json_retries = 0
+            missing_reasoning_count = 0
             
             while not obs.done:
                 if obs.transport_demand > 5:
@@ -52,7 +59,23 @@ def run_phase_2b_training(episodes=5, task_id="hard"):
                 state_str = json.dumps(state_dict)
 
                 # 1. Get LLM Action
-                action, thought = planner.decide_action(obs, task_id)
+                action, thought, invalid_flag, retries, reasoning_present = planner.decide_action(obs, task_id)
+                if invalid_flag:
+                    invalid_action_count += 1
+                total_json_retries += retries
+                if not reasoning_present:
+                    missing_reasoning_count += 1
+                
+                # Calculate metrics before step
+                step_fuel_used = sum(action.values())
+                total_fuel_used += step_fuel_used
+                step_waste = (
+                    max(0, action["fuel_to_hospital"] - obs.hospital_demand) +
+                    max(0, action["fuel_to_emergency"] - obs.emergency_demand) +
+                    max(0, action["fuel_to_transport"] - obs.transport_demand) +
+                    max(0, action["fuel_to_residential"] - obs.residential_demand)
+                )
+                fuel_wasted += step_waste
                 
                 # 2. Step Environment
                 prev_transport_demand = obs.transport_demand
@@ -72,17 +95,21 @@ def run_phase_2b_training(episodes=5, task_id="hard"):
 
             # 4. Log for Portfolio
             log_data = {
-                "phase": "2B",
+                "phase": "2B_stabilized",
                 "difficulty": task_id,
                 "score": final_score,
                 "bottleneck_cleared": bottleneck_cleared_success,
-                "fuel_wasted": 0, 
+                "total_fuel_used": total_fuel_used,
+                "fuel_wasted": fuel_wasted, 
+                "invalid_action_count": invalid_action_count,
+                "json_retries": total_json_retries,
+                "missing_reasoning": missing_reasoning_count,
                 "agent_type": "llm_with_memory",
                 "timestamp": time.time()
             }
             log_episode(log_data)
             
-            print(f"Episode {ep+1} Finished. Score: {final_score} | Bottleneck Cleared: {bottleneck_cleared_success}")
+            print(f"Episode {ep+1} Finished. Score: {final_score} | Bottleneck Cleared: {bottleneck_cleared_success} | Waste: {fuel_wasted} | Invalid: {invalid_action_count} | Retries: {total_json_retries} | Missing Reason: {missing_reasoning_count}")
 
 if __name__ == "__main__":
-    run_phase_2b_training(episodes=3, task_id="hard")
+    run_phase_2b_training(episodes=10, task_id="hard")
