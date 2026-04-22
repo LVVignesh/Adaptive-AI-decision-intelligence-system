@@ -17,16 +17,15 @@ The system is built in three distinct phases of evolution:
 - **Engine:** Integrated **ChromaDB** to store state-action reflections.
 - **Outcome:** A baseline system that "remembers" past mistakes and successes via vector similarity search.
 
-### Phase 2: Strategic Intelligence (Current) 🛠️
+### Phase 2: Strategic Intelligence (Current) ✅
 - **Phase 2A (Complete):** **Expert Data Generation**.
     - Developed a high-precision, rule-based expert planner that manages a 5-step horizon.
     - Captures **180 high-quality trajectories** balanced across Easy, Medium, and Hard difficulties.
-    - Feature Engineering: Normalized demands, `fuel_ratio`, and `bottleneck_pacing`.
-    - **Dataset:** 900+ transition steps formatted in **Llama-3 Instruction JSONL** for fine-tuning.
-- **Phase 2B (Next):** **LLM drop-in Integration**.
-    - Swapping heuristic logic for an LLM decision agent using the generated dataset for in-context learning.
-
-### Phase 3: Knowledge Distillation 🚀
+    - **Dataset:** 900+ transition steps formatted in **Llama-3 Instruction JSONL**.
+- **Phase 2B (Complete):** **LLM Integration & Memory**.
+    - Swapped heuristic logic for a Groq-powered **Llama-3.1-8b** decision agent.
+    - Implemented **Few-Shot Learning** using top trajectories from the Phase 2A dataset.
+    - Integrated **ChromaDB** for step-by-step agent reflections and learning.
 - **Goal:** Fine-tuning an open-source Llama-3 model using **LoRA**.
 - **Outcome:** A standalone, high-performance strategic model that identifies logistics bottlenecks and optimizes fuel distribution with expert-level precision.
 
@@ -65,9 +64,13 @@ We successfully harvested 180 expert-grade episodes with the following constrain
    python runner/train.py
    ```
 3. **Generate Expert Data:**
-   Requires the crisis simulator server running on port 7860:
    ```bash
    python runner/generate_expert_data.py
+   ```
+4. **Run Phase 2B Agent (LLM + Memory):**
+   Requires `GROQ_API_KEY` in `.env`:
+   ```bash
+   python runner/train_llm.py
    ```
 
 ---
