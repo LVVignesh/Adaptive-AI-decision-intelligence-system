@@ -18,7 +18,7 @@ from agent.planner_llm import LLMPlanner
 class FinetunedPlanner:
     def __init__(self, model_path="outputs/llama3_crisis_lora", base_model="unsloth/llama-3-8b-Instruct-bnb-4bit"):
         print(f"Loading tokenizer from {base_model}...")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.tokenizer = AutoTokenizer.from_pretrained(base_model)
         
         print(f"Loading fine-tuned model from {model_path}...")
         base = AutoModelForCausalLM.from_pretrained(
@@ -36,12 +36,12 @@ class FinetunedPlanner:
             "You are a Geopolitical Crisis Logistics AI. Your goal is to stabilize hospital, emergency, and transport demands with minimal fuel waste."
         )
 
-    def decide_action(self, obs, task_id="hard"):
+    def decide_action(self, obs, initial_fuel, remaining_steps, cumulative_reward, task_id="hard"):
         state_dict = {
-            "initial_fuel": obs.initial_fuel,
-            "remaining_steps": obs.remaining_steps,
+            "initial_fuel": initial_fuel,
+            "remaining_steps": remaining_steps,
             "fuel_available": obs.fuel_available,
-            "fuel_ratio": round(obs.fuel_available / obs.initial_fuel, 3),
+            "fuel_ratio": round(obs.fuel_available / initial_fuel, 3),
             "hospital_demand": obs.hospital_demand,
             "emergency_demand": obs.emergency_demand,
             "transport_demand": obs.transport_demand,
@@ -51,8 +51,8 @@ class FinetunedPlanner:
             "transport_ratio": round(obs.transport_demand / 20.0, 3),
             "residential_ratio": round(obs.residential_demand / 15.0, 3),
             "bottleneck": obs.transport_demand > 5,
-            "step_fraction": round((5 - obs.remaining_steps) / 5.0, 2),
-            "cumulative_reward": round(obs.cumulative_reward, 4)
+            "step_fraction": round((5 - remaining_steps) / 5.0, 2),
+            "cumulative_reward": round(cumulative_reward, 4)
         }
 
         user_prompt = (
@@ -119,11 +119,24 @@ def evaluate_agent(planner_instance, episodes=10, task_id="hard"):
             fuel_wasted = 0
             ep_invalid = 0
             
-            while not obs.done:
+            # Reconstruct variables missing from raw obs
+            starting_fuels = {"easy": 160, "medium": 120, "hard": 80}
+            initial_fuel = starting_fuels[task_id]
+            cumulative_reward = 0.0
+            
+            for step in range(1, 6):
+                if obs.done:
+                    break
+                remaining_steps = 5 - step
+                
                 # Get Action
                 if hasattr(planner_instance, "decide_action"):
-                    # Handle different return signatures
-                    res = planner_instance.decide_action(obs, task_id)
+                    # Handle different return signatures based on planner type
+                    if isinstance(planner_instance, FinetunedPlanner):
+                        res = planner_instance.decide_action(obs, initial_fuel, remaining_steps, cumulative_reward, task_id)
+                    else:
+                        res = planner_instance.decide_action(obs, task_id)
+                        
                     if len(res) == 3:
                         action, thought, invalid_flag = res
                     else:
@@ -142,11 +155,12 @@ def evaluate_agent(planner_instance, episodes=10, task_id="hard"):
                               max(0, action.get("fuel_to_transport", 0) - obs.transport_demand) + \
                               max(0, action.get("fuel_to_residential", 0) - obs.residential_demand)
                 
-                obs, reward, done, info = env.step(action)
+                obs = env.step(action)
+                cumulative_reward += obs.reward
                 total_fuel_used += step_fuel_used
                 fuel_wasted += step_wasted
 
-            scores.append(obs.outcome_score)
+            scores.append(cumulative_reward / 5.0)
             wastes.append(fuel_wasted)
             invalids += ep_invalid
             
