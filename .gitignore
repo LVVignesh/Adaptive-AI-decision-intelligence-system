@@ -16,3 +16,18 @@ logs/*
 
 # VS Code
 .vscode/
+
+# Zip deployment packages
+*.zip
+
+# Scratch / debug scripts
+scratch/
+
+# Training checkpoints (large binary files)
+outputs/*/checkpoint-*/
+
+# Large model binary files (use HuggingFace Hub to store these)
+*.safetensors
+*.pt
+*.pth
+*.bin
