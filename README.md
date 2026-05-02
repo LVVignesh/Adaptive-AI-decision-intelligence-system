@@ -51,6 +51,11 @@ Both agents were evaluated over 5 episodes on the **Hard** crisis scenario (80 f
 
 > **Key Insight:** The Fine-Tuned agent achieved a best episode score of `0.1403`, **surpassing the guarded baseline**, while operating with zero hard-coded rules and zero external API calls. This confirms successful knowledge distillation from expert trajectories into model weights.
 
+### 🖼️ Evidence: Phase 3 Evaluation (Google Colab)
+
+![Phase 3 Results Part 1](assests/fine_tuned_colab_results_1.png)
+![Phase 3 Results Part 2](assests/fine_tuned_colab_results_2.png)
+
 ---
 
 ## 🛠️ Technology Stack
