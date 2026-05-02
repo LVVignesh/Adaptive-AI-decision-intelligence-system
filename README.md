@@ -49,12 +49,22 @@ Both agents were evaluated over 5 episodes on the **Hard** crisis scenario (80 f
 | **Requires API (Groq)** | ✅ Yes | ❌ **No — Standalone** |
 | **Hard-Coded Guard Rules** | ✅ Yes | ❌ **No — Pure Neural** |
 
-> **Key Insight:** The Fine-Tuned agent achieved a best episode score of `0.1403`, **surpassing the guarded baseline**, while operating with zero hard-coded rules and zero external API calls. This confirms successful knowledge distillation from expert trajectories into model weights.
+> **Key Insight:** The Fine-Tuned agent achieved a best episode score of `0.1403`, **achieving competitive peak performance** while demonstrating that standalone neural reasoning still requires hybrid constraints to match the average stability and 0-waste reliability of the guarded system.
 
 ### 🖼️ Evidence: Phase 3 Evaluation (Google Colab)
 
 ![Phase 3 Results Part 1](assests/fine_tuned_colab_results_1.png)
 ![Phase 3 Results Part 2](assests/fine_tuned_colab_results_2.png)
+
+---
+
+## 🧠 Core Engineering Insight: Hybrid Intelligence
+
+This project demonstrates a critical principle in production AI:
+*   **Neural Reasoning (LLM)**: Excellent for flexible decision-making and pattern recognition.
+*   **Deterministic Constraints (Guards)**: Essential for safety, pacing, and 100% adherence to business/logic rules.
+
+**The Result:** A hybrid system combining these two layers achieves a performance level and safety profile that neither approach could reach alone. This mirrors the architecture of real-world autonomous systems in safety-critical domains like logistics and energy.
 
 ---
 
