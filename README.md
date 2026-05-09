@@ -49,6 +49,9 @@ The final architecture combines the **Phase 3 Fine-Tuned Brain** with the **Phas
 | **Guardrail Interventions** | **3** | 🧠 **Stabilized** |
 
 > **Key Insight:** By wrapping the fine-tuned model in a deterministic constraint layer, we achieve a **20x performance gain** over the base model while maintaining 100% safety. This Hybrid Agent is the definitive version presented for the Round 2 Re-Thesis.
+>
+> **Experimental Progression:** 
+> Baseline (Llama-3) ➔ Memory Agent ➔ Guarded LLM ➔ Fine-Tuned Model ➔ **Hybrid Agent (Winner)**
 
 ### 🖼️ Evidence: Hybrid Agent Evaluation (Google Colab)
 
