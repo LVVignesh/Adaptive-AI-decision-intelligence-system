@@ -50,8 +50,13 @@ The final architecture combines the **Phase 3 Fine-Tuned Brain** with the **Phas
 
 > **Key Insight:** By wrapping the fine-tuned model in a deterministic constraint layer, we achieve a **20x performance gain** over the base model while maintaining 100% safety. This Hybrid Agent is the definitive version presented for the Round 2 Re-Thesis.
 
-### 🖼️ Evidence: Phase 3 Evaluation (Google Colab)
+### 🖼️ Evidence: Hybrid Agent Evaluation (Google Colab)
 
+#### Round 2: Hybrid Agent (Fine-Tuned + Guardrails)
+![Hybrid Results Part 1](assests/hybrid_fine%20tuned_colab_output_3.png)
+![Hybrid Results Part 2](assests/hybrid_fine_tuned_colab_output_4.png)
+
+#### Previous Phase: Pure Fine-Tuned Agent
 ![Phase 3 Results Part 1](assests/fine_tuned_colab_results_1.png)
 ![Phase 3 Results Part 2](assests/fine_tuned_colab_results_2.png)
 
