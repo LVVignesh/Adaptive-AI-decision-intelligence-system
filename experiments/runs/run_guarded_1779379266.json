@@ -1,0 +1,10 @@
+{
+    "agent": "guarded",
+    "episodes": 1,
+    "score": 0.12337724918032786,
+    "waste": 0,
+    "runtime": 12.13069224357605,
+    "fuel": 0.0,
+    "timestamp": "2026-05-21T21:31:06.181473",
+    "hardware": "CPU (Local API)"
+}

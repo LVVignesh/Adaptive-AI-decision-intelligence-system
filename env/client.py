@@ -40,8 +40,8 @@ class GlobalCrisisEnv:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    def reset(self, task_id: str = "easy", seed: Optional[int] = None) -> GlobalCrisisObservation:
-        payload = {"task_id": task_id}
+    def reset(self, task_id: str = "easy", seed: Optional[int] = None, **kwargs) -> GlobalCrisisObservation:
+        payload = {"task_id": task_id, **kwargs}
         if seed is not None:
             payload["seed"] = seed
             

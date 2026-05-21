@@ -1,0 +1,10 @@
+{
+    "agent": "ablation_no_finetune",
+    "episodes": 1,
+    "score": 0.12237704918032788,
+    "waste": 0,
+    "runtime": 31.578163385391235,
+    "fuel": 45.0,
+    "timestamp": "2026-05-21T21:39:57.478039",
+    "hardware": "CPU (Local API)"
+}
