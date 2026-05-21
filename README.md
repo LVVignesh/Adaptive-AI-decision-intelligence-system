@@ -109,4 +109,51 @@ This project demonstrates a critical principle in production AI:
 
 ---
 
+## 🧪 System Evaluation
+
+This project includes a full **AI Engineering Quality Evaluation Platform** under `evaluation/` with reproducible benchmarking, robustness analysis, and ablation studies.
+
+### Agent Performance Benchmarks (Hard Mode · 80-unit Fuel Reserve · 5 Steps)
+
+| Agent | Avg Score | Fuel Waste | Bottleneck Clear Rate | Hardware |
+| :--- | :---: | :---: | :---: | :--- |
+| **Baseline** (raw LLM) | 0.0300 | 75 units | 20.0% | CPU / Groq API |
+| **Memory** (+ ChromaDB) | 0.0800 | 45 units | 60.0% | CPU / Groq API |
+| **Guarded** (+ Constraints) | 0.1150 | 0 units | 100.0% | CPU / Groq API |
+| **Fine-Tuned** (LoRA adapter) | 0.0876 | 35 units | 45.0% | GPU (Colab) |
+| **Hybrid** ✅ (Fine-Tuned + Guards) | **0.1315** | **0 units** | **100.0%** | GPU (Colab) |
+
+### Evaluation Suite Overview
+
+| Script | Purpose | Output |
+| :--- | :--- | :--- |
+| `evaluation/benchmark.py` | Full agent benchmark with CLI `--episodes` support | `benchmark_results.csv` |
+| `evaluation/robustness.py` | Tests agent under fuel limits `[40, 60, 80, 100]` | `robustness_results.csv` |
+| `evaluation/ablation.py` | Isolates contribution of memory, guardrails, fine-tuning | `ablation_results.csv` |
+| `evaluation/report.py` | Compiles all CSVs into charts + `evaluation_report.md` | PNG charts + report |
+| `evaluation/reproducibility.md` | Hardware specs, seeds, and step-by-step instructions | — |
+| `evaluation/failure_analysis.md` | Failure profiles with root causes and mitigations | — |
+
+### How to Run the Evaluation Suite
+
+> **Prerequisite:** Start the simulator server first: `python -m server.app`
+
+```bash
+# 1. Benchmark all agents
+python evaluation/benchmark.py --episodes 5
+
+# 2. Robustness tests (vary fuel limits 40–100)
+python evaluation/robustness.py --episodes 5
+
+# 3. Ablation study
+python evaluation/ablation.py --episodes 5
+
+# 4. Compile charts and full report
+python evaluation/report.py
+```
+
+All raw run logs are stored in `experiments/runs/` and a consolidated audit trail is generated at `experiments/experiment_summary.md`.
+
+---
+
 *This project is a flagship demonstration of full-lifecycle Adaptive AI engineering for decision-intelligence roles.*

@@ -1,0 +1,10 @@
+{
+    "agent": "ablation_baseline",
+    "episodes": 1,
+    "score": 0.06098420655737703,
+    "waste": 5,
+    "runtime": 12.477509498596191,
+    "fuel": 45.0,
+    "timestamp": "2026-05-21T21:40:11.575214",
+    "hardware": "CPU (Local API)"
+}

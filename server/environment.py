@@ -46,6 +46,7 @@ class GlobalCrisisEnv(Environment):
 
     def reset(self, seed: Optional[int] = None, episode_id: Optional[str] = None, **kwargs) -> TaskObservation:
         diff = kwargs.get("task_id", "easy")
+        fuel_override = kwargs.get("fuel")
         if diff not in _DIFFICULTY_CONFIG:
             diff = "easy"
 
@@ -63,24 +64,27 @@ class GlobalCrisisEnv(Environment):
             "transport":   cfg["transport"] + (random.randint(-1, 1) if seed is None else 0),
             "residential": cfg["residential"] + (random.randint(-1, 1) if seed is None else 0),
         }
+        
+        initial_fuel = float(fuel_override if fuel_override is not None else cfg["fuel"])
+        
         state = TaskState(
             episode_id=ep_id,
             step_count=0,
             task_difficulty=diff,
             total_score=0.0,
-            fuel_available=float(cfg["fuel"]),
+            fuel_available=initial_fuel,
             current_demands=demands,
         )
         GlobalCrisisEnv._episodes[ep_id] = state
 
         return TaskObservation(
             episode_id=ep_id,
-            fuel_available=cfg["fuel"],
+            fuel_available=int(initial_fuel),
             hospital_demand=demands["hospital"],
             emergency_demand=demands["emergency"],
             transport_demand=demands["transport"],
             residential_demand=demands["residential"],
-            message=f"CRISIS MISSION COMMENCED: [{diff.upper()}] Mode. Reserve: {cfg['fuel']} units.",
+            message=f"CRISIS MISSION COMMENCED: [{diff.upper()}] Mode. Reserve: {int(initial_fuel)} units.",
             reward=1e-6,
             done=False,
         )

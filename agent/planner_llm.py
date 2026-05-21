@@ -32,24 +32,33 @@ class LLMPlanner:
             "[ACTION] {\"fuel_to_hospital\": int, \"fuel_to_emergency\": int, \"fuel_to_transport\": int, \"fuel_to_residential\": int}\n"
         )
 
-    def _get_context(self, task_id, current_state_dict):
+    def _get_context(self, task_id, current_state_dict, use_memory=True, use_experts=True, use_history=True):
         # 1. Expert Examples
-        experts = self.expert_provider.get_top_examples(task_id, k=2)
-        expert_context = "\n".join([self.expert_provider.format_example_for_prompt(e) for e in experts])
+        if use_experts:
+            experts = self.expert_provider.get_top_examples(task_id, k=2)
+            expert_context = "\n".join([self.expert_provider.format_example_for_prompt(e) for e in experts])
+        else:
+            expert_context = "No expert demonstrations provided."
 
         # 2. Memory Reflections
-        state_str = json.dumps(current_state_dict)
-        memories = self.memory.query(state_str, k=2)
-        memory_context = "\n".join(memories) if memories else "No relevant memories found."
+        if use_memory:
+            state_str = json.dumps(current_state_dict)
+            memories = self.memory.query(state_str, k=2)
+            memory_context = "\n".join(memories) if memories else "No relevant memories found."
+        else:
+            memory_context = "No past memory reflection context provided."
 
         # 3. Recent History (Last 2 steps)
         history_context = ""
-        for i, h in enumerate(self.history[-2:]):
-            history_context += f"Previous Step {i+1}:\nState: {json.dumps(h['state'])}\nAction: {json.dumps(h['action'])}\n"
+        if use_history:
+            for i, h in enumerate(self.history[-2:]):
+                history_context += f"Previous Step {i+1}:\nState: {json.dumps(h['state'])}\nAction: {json.dumps(h['action'])}\n"
+        else:
+            history_context = "No recent history provided."
 
         return expert_context, memory_context, history_context
 
-    def decide_action(self, obs, task_id):
+    def decide_action(self, obs, task_id, use_memory=True, use_experts=True, use_history=True, use_guardrails=True):
         # Convert observation object to normalized dict
         current_state = {
             "fuel_available": obs.fuel_available,
@@ -69,7 +78,7 @@ class LLMPlanner:
             print("\n[THOUGHT] Fuel exhausted. Waiting for next step.")
             return {"fuel_to_hospital": 0, "fuel_to_emergency": 0, "fuel_to_transport": 0, "fuel_to_residential": 0}, "Fuel exhausted.", False, 0, True
 
-        expert_ctx, memory_ctx, history_ctx = self._get_context(task_id, current_state)
+        expert_ctx, memory_ctx, history_ctx = self._get_context(task_id, current_state, use_memory, use_experts, use_history)
 
         user_prompt = f"""
 --- EXPERT DEMONSTRATIONS ---
@@ -85,8 +94,9 @@ class LLMPlanner:
 {json.dumps(current_state)}
 
 Task: Decide the optimal fuel allocation for the current state.
-Remember: Clear bottlenecks (Transport > 5) immediately.
 """
+        if use_guardrails:
+            user_prompt += "Remember: Clear bottlenecks (Transport > 5) immediately.\n"
 
         max_retries = 2
         for attempt in range(max_retries):
@@ -122,34 +132,39 @@ Remember: Clear bottlenecks (Transport > 5) immediately.
                     if not all(k in action for k in required_keys):
                         raise ValueError("Missing keys in JSON")
                     
-                    # FIX 1 & 5 & 6: HARD CONSTRAINT LAYER, SOFT CAP & DEMAND CLAMPING
-                    fuel_available = obs.fuel_available
-                    
-                    # Clamp allocations to not exceed sector demands to eliminate waste
-                    action["fuel_to_hospital"] = min(action["fuel_to_hospital"], obs.hospital_demand)
-                    action["fuel_to_emergency"] = min(action["fuel_to_emergency"], obs.emergency_demand)
-                    action["fuel_to_transport"] = min(action["fuel_to_transport"], obs.transport_demand)
-                    action["fuel_to_residential"] = min(action["fuel_to_residential"], obs.residential_demand)
-                    
-                    # Ensure no negative values
-                    for k in action: action[k] = max(0, action[k])
+                    # Ensure integer and positive values even without guardrails to prevent env crash
+                    for k in required_keys:
+                        action[k] = max(0, int(action[k]))
 
-                    max_this_step = fuel_available * 0.6 if fuel_available > 10 else fuel_available
-                    total_requested = sum(action.values())
-                    
-                    if total_requested > max_this_step:
-                        print(f"[GUARD] Scaling action from {total_requested} to {int(max_this_step)} for pacing.")
-                        scale = max_this_step / total_requested
-                        for key in action:
-                            action[key] = int(action[key] * scale)
-                            
-                    # Priority Guard: If bottleneck is active but LLM ignored it
-                    if obs.transport_demand > 5 and action["fuel_to_transport"] < min(obs.transport_demand, max_this_step):
-                        print("[GUARD] Enforcing PRIORITY RULE for Transport Bottleneck.")
-                        invalid_flag = True
-                        # Reallocate to transport first
-                        needed = min(obs.transport_demand, int(max_this_step))
-                        action = {"fuel_to_hospital": 0, "fuel_to_emergency": 0, "fuel_to_transport": needed, "fuel_to_residential": 0}
+                    if use_guardrails:
+                        # FIX 1 & 5 & 6: HARD CONSTRAINT LAYER, SOFT CAP & DEMAND CLAMPING
+                        fuel_available = obs.fuel_available
+                        
+                        # Clamp allocations to not exceed sector demands to eliminate waste
+                        action["fuel_to_hospital"] = min(action["fuel_to_hospital"], obs.hospital_demand)
+                        action["fuel_to_emergency"] = min(action["fuel_to_emergency"], obs.emergency_demand)
+                        action["fuel_to_transport"] = min(action["fuel_to_transport"], obs.transport_demand)
+                        action["fuel_to_residential"] = min(action["fuel_to_residential"], obs.residential_demand)
+                        
+                        # Ensure no negative values
+                        for k in action: action[k] = max(0, action[k])
+
+                        max_this_step = fuel_available * 0.6 if fuel_available > 10 else fuel_available
+                        total_requested = sum(action.values())
+                        
+                        if total_requested > max_this_step:
+                            print(f"[GUARD] Scaling action from {total_requested} to {int(max_this_step)} for pacing.")
+                            scale = max_this_step / total_requested
+                            for key in action:
+                                action[key] = int(action[key] * scale)
+                                
+                        # Priority Guard: If bottleneck is active but LLM ignored it
+                        if obs.transport_demand > 5 and action["fuel_to_transport"] < min(obs.transport_demand, max_this_step):
+                            print("[GUARD] Enforcing PRIORITY RULE for Transport Bottleneck.")
+                            invalid_flag = True
+                            # Reallocate to transport first
+                            needed = min(obs.transport_demand, int(max_this_step))
+                            action = {"fuel_to_hospital": 0, "fuel_to_emergency": 0, "fuel_to_transport": needed, "fuel_to_residential": 0}
 
                     # Valid Action Achieved
                     print(f"[ACTION] {json.dumps(action)}")
