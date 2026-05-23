@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from env.client import GlobalCrisisEnv
 from agent.planner_llm import LLMPlanner
-from evaluation.config import DEFAULT_EPISODES, HISTORICAL_METRICS, RUNS_DIR, EVAL_DIR
+from evaluation.config import DEFAULT_EPISODES, load_historical_metrics, RUNS_DIR, EVAL_DIR
 
 def run_ablation_config(config_name, episodes, task_id="hard"):
     print(f"\nRunning Ablation Config: {config_name.upper()} ({episodes} episodes)...")
@@ -97,7 +97,8 @@ def run_ablation_config(config_name, episodes, task_id="hard"):
         "waste": int(total_waste),
         "bottleneck_rate": float(bottleneck_rate),
         "runtime": float(elapsed_time),
-        "fuel": 45.0  # standard average remaining fuel
+        "fuel": 45.0,  # standard average remaining fuel
+        "source": "live_evaluation"
     }
 
 def main():
@@ -116,13 +117,15 @@ def main():
     
     # 1. FULL_HYBRID (Use historical fallback for GPU-dependent LoRA weights)
     print("\nLoading FULL_HYBRID metrics from historical logs (GPU-dependent)...")
-    hist = HISTORICAL_METRICS["hybrid"]
+    hist_metrics = load_historical_metrics()
+    hist = hist_metrics["hybrid"]
     results["full_hybrid"] = {
         "avg_score": hist["avg_score"],
         "max_score": hist["max_score"],
         "waste": hist["waste"],
         "bottleneck_rate": hist["bottleneck_rate"],
-        "runtime": hist["runtime"]
+        "runtime": hist["runtime"],
+        "source": "historical_reference"
     }
     # Log FULL_HYBRID run metadata
     run_data = {
@@ -161,7 +164,7 @@ def main():
     csv_file = os.path.join(EVAL_DIR, "ablation_results.csv")
     with open(csv_file, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["config", "avg_score", "max_score", "waste", "bottleneck_rate", "runtime"])
+        writer.writerow(["config", "avg_score", "max_score", "waste", "bottleneck_rate", "runtime", "source"])
         for config in ["full_hybrid", "no_memory", "no_guardrails", "no_finetune", "baseline"]:
             res = results[config]
             writer.writerow([
@@ -170,7 +173,8 @@ def main():
                 res["max_score"],
                 res["waste"],
                 res["bottleneck_rate"],
-                res["runtime"]
+                res["runtime"],
+                res["source"]
             ])
             
     print("\n==================================================")

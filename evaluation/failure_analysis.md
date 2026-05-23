@@ -7,7 +7,7 @@ This report documents representative failure modes observed in the sequential cr
 ## 🔍 Failure Profile Catalog
 
 ### 1. Over-Allocation Failure
-- **Episode**: Episode 3, Step 2 (Baseline Evaluation)
+- **Scenario**: Representative Failure Scenario (Baseline Evaluation)
 - **Agent**: `baseline` (Raw LLM)
 - **Failure**: The agent outputted an allocation plan requesting a total of 110 units of fuel, while the global reserve stood at 80 units. This triggered a `LOGISTICS OVERLOAD` on the simulator, resulting in 0 actual fuel shipped and a step reward of `1e-6`.
 - **Root Cause**: Autoregressive LLMs cannot guarantee mathematical summation consistency across outputs. Without hard constraints, they generate numbers that look superficially plausible but violate physical conservation of resources.
@@ -16,7 +16,7 @@ This report documents representative failure modes observed in the sequential cr
 ---
 
 ### 2. Pacing Collapse (Greedy Exhaustion)
-- **Episode**: Episode 1, Step 1 (Memory-only Evaluation)
+- **Scenario**: Representative Failure Scenario (Memory-only Evaluation)
 - **Agent**: `memory` (LLM with memory reflection, no guardrails)
 - **Failure**: The agent allocated 75 units of fuel on Step 1 of a 5-step game. While this cleared immediate demands, it left only 5 units of fuel for the remaining 4 steps, causing systemic collapse and near-zero rewards in later steps.
 - **Root Cause**: Temporal horizon misalignment. LLMs are biased towards greedily resolving high-intensity demands in the current prompt context, failing to execute long-term multi-step budgeting.
@@ -25,7 +25,7 @@ This report documents representative failure modes observed in the sequential cr
 ---
 
 ### 3. Transport Bottleneck Miss
-- **Episode**: Episode 2, Step 3 (Baseline/Memory Evaluation)
+- **Scenario**: Representative Failure Scenario (Baseline/Memory Evaluation)
 - **Agent**: `memory` (LLM with memory, no guardrails)
 - **Failure**: Transport demand was 12 units (active bottleneck threshold is > 5). The agent allocated 10 to Hospital and 0 to Transport. Consequently, a `LOGISTICS BOTTLENECK` occurred, dropping overall sector delivery efficiency to 40% for the step.
 - **Root Cause**: Priority logic distraction. When presented with multiple high-demand sectors in a single context window, the model defaults to basic prompt-level weights (e.g. prioritizing hospitals due to semantic associations) and ignores complex conditional rules.
@@ -34,7 +34,7 @@ This report documents representative failure modes observed in the sequential cr
 ---
 
 ### 4. Stochastic JSON Formatting Errors
-- **Episode**: Episode 5, Step 1 (Guarded LLM)
+- **Scenario**: Representative Failure Scenario (Guarded LLM)
 - **Agent**: `guarded` (during initialization)
 - **Failure**: The model generated markdown-style blocks, text wrapping around the JSON, or malformed braces:
   `[ACTION] {"fuel_to_hospital": 20, "fuel_to_emergency": 15... (truncated)`
@@ -47,7 +47,7 @@ This report documents representative failure modes observed in the sequential cr
 ---
 
 ### 5. Demand Oversubscription (Guard Intervention)
-- **Episode**: Episode 4, Step 4 (Guarded Agent)
+- **Scenario**: Representative Failure Scenario (Guarded Agent)
 - **Agent**: `guarded`
 - **Failure**: The agent attempted to allocate 18 units of fuel to the Emergency sector, where the actual demand was only 8 units. This would have resulted in 10 units of fuel being completely wasted.
 - **Root Cause**: Memory mismatch or estimation drift. The model failed to compute the exact demand offset after preceding steps, predicting allocations based on outdated context.

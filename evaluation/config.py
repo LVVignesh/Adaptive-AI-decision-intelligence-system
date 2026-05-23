@@ -1,5 +1,7 @@
 # evaluation/config.py
 import os
+import json
+from pathlib import Path
 
 # Default number of evaluation episodes
 DEFAULT_EPISODES = 5
@@ -17,42 +19,48 @@ os.makedirs(EXPERIMENTS_DIR, exist_ok=True)
 os.makedirs(RUNS_DIR, exist_ok=True)
 os.makedirs(LOGS_DIR, exist_ok=True)
 
-# Historical benchmarks fallback metrics (when GPU/weights are unavailable)
-# Verified from Phase 3 Re-Thesis results
-HISTORICAL_METRICS = {
-    "baseline": {
-        "avg_score": 0.03,
-        "max_score": 0.05,
-        "waste": 75,  # high waste
-        "bottleneck_rate": 20.0,
-        "runtime": 1.2
-    },
-    "memory": {
-        "avg_score": 0.08,
-        "max_score": 0.10,
-        "waste": 45,
-        "bottleneck_rate": 60.0,
-        "runtime": 2.5
-    },
-    "guarded": {
-        "avg_score": 0.115,
-        "max_score": 0.125,
-        "waste": 0,
-        "bottleneck_rate": 100.0,
-        "runtime": 4.1
-    },
-    "finetuned": {
-        "avg_score": 0.0876,
-        "max_score": 0.11,
-        "waste": 35,
-        "bottleneck_rate": 45.0,
-        "runtime": 5.2
-    },
-    "hybrid": {
-        "avg_score": 0.1315,
-        "max_score": 0.142,
-        "waste": 0,
-        "bottleneck_rate": 100.0,
-        "runtime": 5.8
-    }
-}
+def load_historical_metrics():
+    """
+    Load historical benchmark metrics from JSON file.
+    
+    Returns:
+        dict: Historical metrics for all agent configurations (baseline, memory, guarded, finetuned, hybrid)
+              from Phase 3 Re-Thesis evaluation.
+    
+    Raises:
+        FileNotFoundError: If historical_results.json does not exist.
+        json.JSONDecodeError: If JSON file is malformed.
+    """
+    historical_file = Path(EVAL_DIR) / "historical_results.json"
+    
+    if not historical_file.exists():
+        raise FileNotFoundError(
+            f"Historical metrics file not found at {historical_file}. "
+            "Please ensure evaluation/historical_results.json exists."
+        )
+    
+    try:
+        with open(historical_file, "r") as f:
+            data = json.load(f)
+        return data["results"]
+    except KeyError:
+        raise ValueError(
+            "historical_results.json is missing 'results' key. "
+            "Please verify file structure matches expected format."
+        )
+    except json.JSONDecodeError as e:
+        raise json.JSONDecodeError(
+            f"Failed to parse historical_results.json: {e.msg}",
+            e.doc,
+            e.pos
+        )
+
+# Lazy-load historical metrics (only when first accessed)
+_HISTORICAL_METRICS = None
+
+def HISTORICAL_METRICS():
+    """Backward-compatible accessor for historical metrics (deprecated)."""
+    global _HISTORICAL_METRICS
+    if _HISTORICAL_METRICS is None:
+        _HISTORICAL_METRICS = load_historical_metrics()
+    return _HISTORICAL_METRICS

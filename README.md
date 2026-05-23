@@ -156,4 +156,72 @@ All raw run logs are stored in `experiments/runs/` and a consolidated audit trai
 
 ---
 
+## 📋 Evaluation Methodology
+
+This section provides a quick reference for the evaluation framework. For detailed documentation, see the files referenced below.
+
+### Benchmark Evaluation
+**Purpose:** Measure agent performance on the full hard-mode logistics task (80 fuel units, 5-step horizon).
+
+**Run:** 
+```bash
+python evaluation/benchmark.py --episodes 5
+```
+
+**Output:** `benchmark_results.csv` with metrics for all five agent variants (baseline, memory, guarded, finetuned, hybrid).
+
+**Details:** See [evaluation/reproducibility.md](./evaluation/reproducibility.md) for hardware requirements and seed ranges.
+
+### Robustness Testing
+**Purpose:** Test agent performance under constrained fuel scenarios `[40, 60, 80, 100]` to measure adaptability.
+
+**Run:**
+```bash
+python evaluation/robustness.py --episodes 5
+```
+
+**Output:** `robustness_results.csv` with performance and uncertainty metrics (mean, std, 95% CI) per fuel limit.
+
+**Details:** Evaluates the guarded agent configuration across increasing resource scarcity.
+
+### Ablation Studies
+**Purpose:** Isolate component contributions (memory, guardrails, fine-tuning) to understand system behavior.
+
+**Run:**
+```bash
+python evaluation/ablation.py --episodes 5
+```
+
+**Output:** `ablation_results.csv` comparing five configurations: baseline, no_memory, no_guardrails, no_finetune, and full_hybrid (historical reference).
+
+**Details:** Distinguishes between live CPU evaluation and Phase 3 historical reference via `source` column. See [evaluation/assumptions.md](./evaluation/assumptions.md) for methodology.
+
+### Results & Reporting
+**Purpose:** Generate consolidated evaluation report with visualizations.
+
+**Run:**
+```bash
+python evaluation/report.py
+```
+
+**Output:** 
+- `evaluation_report.md` — Final report with methodology, results, limitations, and conclusions
+- `benchmark_comparison.png` — Agent performance comparison chart
+- `robustness_curve.png` — Fuel constraint sensitivity analysis
+- `ablation_analysis.png` — Component contribution breakdown
+
+### Reproducibility
+**Details:** See [evaluation/reproducibility.md](./evaluation/reproducibility.md) for:
+- Hardware specifications (CPU vs. GPU)
+- Python version and dependency requirements
+- Random seed strategy for reproducible runs
+- Step-by-step execution instructions
+
+### Additional Documentation
+- [evaluation/assumptions.md](./evaluation/assumptions.md) — Methodology constraints, historical data origin, model assumptions
+- [evaluation/failure_analysis.md](./evaluation/failure_analysis.md) — Failure modes, root causes, and mitigation strategies
+- [evaluation/CHANGELOG.md](./evaluation/CHANGELOG.md) — Version history and changes to evaluation framework
+
+---
+
 *This project is a flagship demonstration of full-lifecycle Adaptive AI engineering for decision-intelligence roles.*

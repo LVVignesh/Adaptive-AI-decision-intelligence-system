@@ -160,13 +160,14 @@ def compile_markdown_report(b_chart, r_chart, a_chart):
             for row in reader:
                 robustness_table += f"| **{row[0]}** | {float(row[1]):.4f} | {float(row[2]):.4f} | {row[3]} | {float(row[4]):.1f}% | {float(row[5]):.2f}s |\n"
 
-    ablation_table = "| Configuration | Avg Score | Max Score | Fuel Waste | Bottleneck Clear Rate | Runtime (s) |\n|---|---|---|---|---|---|\n"
+    ablation_table = "| Configuration | Avg Score | Max Score | Fuel Waste | Bottleneck Clear Rate | Runtime (s) | Source |\n|---|---|---|---|---|---|---|\n"
     if os.path.exists(ABLATION_CSV):
         with open(ABLATION_CSV, "r") as f:
-            reader = csv.reader(f)
-            next(reader)
+            reader = csv.DictReader(f)
             for row in reader:
-                ablation_table += f"| **{row[0].replace('_', ' ').upper()}** | {float(row[1]):.4f} | {float(row[2]):.4f} | {row[3]} | {float(row[4]):.1f}% | {float(row[5]):.2f}s |\n"
+                source = row.get("source", "unknown")
+                source_label = "Historical Reference" if source == "historical_reference" else "Live Evaluation"
+                ablation_table += f"| **{row['config'].replace('_', ' ').upper()}** | {float(row['avg_score']):.4f} | {float(row['max_score']):.4f} | {row['waste']} | {float(row['bottleneck_rate']):.1f}% | {float(row['runtime']):.2f}s | {source_label} |\n"
 
     # Use forward slash link style with file:// prefix for Windows compatibility in Markdown files
     b_link = f"file:///{b_chart.replace(os.sep, '/')}" if b_chart else ""
@@ -187,9 +188,9 @@ We evaluated five agent variations in a high-intensity crisis logistics scenario
 ### Benchmark Comparison Chart
 ![Benchmark Comparison]({b_link})
 
-### Key Takeaways:
-- **Hybrid Superiority**: The **HYBRID** agent (combining LoRA weights and deterministic guardrails) achieves the highest efficiency score of **0.1315**, outperforming all other agents with **zero fuel waste** and a **100% transport bottleneck resolution rate**.
-- **Guardrails Criticality**: Toggling guardrails on the base LLM (comparing **BASELINE** vs **GUARDED**) lifts the system score from **0.0300 to 0.1150** and completely eliminates fuel waste.
+### Key Observations:
+- **Hybrid Agent Performance**: The **HYBRID** agent (combining LoRA weights and deterministic guardrails) achieves the highest efficiency score of **0.1315**, outperforming all other agents with **zero fuel waste** and a **100% transport bottleneck resolution rate**.
+- **Guardrails Contribution**: Adding guardrails to the base LLM (comparing **BASELINE** vs **GUARDED**) is associated with performance improvement from **0.0300 to 0.1150**, with complete elimination of fuel waste.
 
 ---
 
@@ -201,9 +202,9 @@ We evaluated the **GUARDED** agent under varying fuel reserve limits `[40, 60, 8
 ### Robustness Curve
 ![Robustness Curve]({r_link})
 
-### Key Takeaways:
-- **Graceful Performance Scaling**: Even at a critical fuel limit of **40 units** (which is 50% below standard hard mode), the agent achieves a stable score of **0.0620** while maintaining a **100% bottleneck clear rate**.
-- **Logistics Priority Preservation**: Under low-resource constraints, the guardrails successfully throttle non-critical sector distributions to guarantee transport infrastructure functionality.
+### Key Observations:
+- **Performance Under Constraints**: Even at a critical fuel limit of **40 units** (which is 50% below standard hard mode), the agent achieves a stable score of **0.0620** while maintaining a **100% bottleneck clear rate**.
+- **Resource Allocation Strategy**: Under low-resource constraints, the guardrails demonstrate the ability to prioritize non-critical sector distributions to maintain transport infrastructure functionality.
 
 ---
 
@@ -215,9 +216,36 @@ We conducted ablation experiments to isolate the performance contribution of ind
 ### Ablation Comparison Chart
 ![Ablation Analysis]({a_link})
 
-### Key Takeaways:
-- **Guardrails are the Primary Driver**: Removing guardrails (**NO GUARDRAILS**) causes the largest performance drop, reducing the average score from **0.1315 down to 0.0800** and introducing massive fuel waste.
-- **Memory Role**: Removing ChromaDB memory context (**NO MEMORY**) causes a moderate performance drop to **0.1080**, demonstrating that historical retrieval helps the model self-correct across steps.
+### Key Observations:
+- **Guardrails Impact**: Removing guardrails (**NO GUARDRAILS**) shows the largest observed performance contribution, with performance declining from **0.1315 to 0.0800** and introducing significant fuel waste. This aligns with the guardrails' intended role as a safety constraint.
+- **Memory Contribution**: Removing ChromaDB memory context (**NO MEMORY**) shows a moderate performance change to **0.1080**, suggesting that historical retrieval correlates with model performance across evaluation steps.
+- **Reference Configuration**: The **FULL HYBRID (HISTORICAL)** configuration uses Phase 3 benchmark results rather than live CPU evaluation, and serves as a performance reference point.
+
+---
+
+## ⚠️ Limitations
+
+The following limitations should be considered when interpreting these results:
+
+1. **Historical Reference Usage**: The **FULL HYBRID (HISTORICAL)** benchmark partially references historical evaluation data from Phase 3 Re-Thesis rather than live CPU-evaluated results. This creates a mixed evaluation paradigm for comparison purposes.
+
+2. **Environment Specificity**: Results reflect performance within the fuel-constrained logistics simulator environment. Generalization to other domains or real-world scenarios is not supported by this evaluation.
+
+3. **Limited Episode Count**: The evaluation uses a default of 5 episodes for reproducibility. While this balances runtime concerns, larger episode counts would improve statistical confidence. See evaluation/reproducibility.md for recommendations.
+
+4. **Constrained Fuel Scenarios**: Robustness testing covers fuel limits [40, 60, 80, 100]. Additional or alternative constraints may reveal different performance characteristics.
+
+5. **Component Isolation**: Ablation studies evaluate component contributions within the current agent architecture. Different architectural choices may produce different component importance rankings.
+
+6. **No Model Retraining**: All results use fixed models from Phase 3. Recent improvements to underlying LLMs or fine-tuning methodologies are not reflected in these benchmarks.
+
+---
+
+## Conclusion
+
+The evaluation framework demonstrates systematic measurement of agent performance across multiple dimensions (benchmark, robustness, ablation). While the HYBRID agent configuration shows the strongest observed performance in this setup, results should be interpreted within the specific constraints and assumptions documented above.
+
+For reproducibility details, hardware specifications, and troubleshooting guidance, see evaluation/reproducibility.md.
 """
 
     with open(REPORT_MD, "w", encoding="utf-8") as f:

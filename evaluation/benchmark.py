@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from env.client import GlobalCrisisEnv
 from agent.planner_llm import LLMPlanner
-from evaluation.config import DEFAULT_EPISODES, HISTORICAL_METRICS, RUNS_DIR, EVAL_DIR
+from evaluation.config import DEFAULT_EPISODES, load_historical_metrics, RUNS_DIR, EVAL_DIR
 
 def check_gpu():
     """Checks if CUDA and the fine-tuned LoRA weights are available."""
@@ -118,7 +118,8 @@ def run_dynamic_agent(agent_name, episodes, task_id="hard"):
         "waste": int(total_waste),
         "bottleneck_rate": float(bottleneck_rate),
         "runtime": float(elapsed_time),
-        "fuel": float(avg_remaining_fuel)
+        "fuel": float(avg_remaining_fuel),
+        "source": "live_evaluation"
     }
 
 def main():
@@ -154,26 +155,30 @@ def main():
                 print(f"\nSkipping dynamic execution of {agent} because model loading setup requires specific torch wrapper.")
                 print(f"Loading historical metrics for {agent} instead.")
                 # We fall back to historical metrics to guarantee stability & truthfulness
-                hist = HISTORICAL_METRICS[agent]
+                hist_metrics = load_historical_metrics()
+                hist = hist_metrics[agent]
                 results[agent] = {
                     "avg_score": hist["avg_score"],
                     "max_score": hist["max_score"],
                     "waste": hist["waste"],
                     "bottleneck_rate": hist["bottleneck_rate"],
                     "runtime": hist["runtime"],
-                    "fuel": 20.0 if agent == "finetuned" else 45.0
+                    "fuel": 20.0 if agent == "finetuned" else 45.0,
+                    "source": "historical_reference"
                 }
             else:
                 print(f"\n[GPU/LoRA unavailable] Skipping local dynamic run for {agent}.")
                 print(f"Loading historical metrics for {agent} from existing saved logs.")
-                hist = HISTORICAL_METRICS[agent]
+                hist_metrics = load_historical_metrics()
+                hist = hist_metrics[agent]
                 results[agent] = {
                     "avg_score": hist["avg_score"],
                     "max_score": hist["max_score"],
                     "waste": hist["waste"],
                     "bottleneck_rate": hist["bottleneck_rate"],
                     "runtime": hist["runtime"],
-                    "fuel": 20.0 if agent == "finetuned" else 45.0
+                    "fuel": 20.0 if agent == "finetuned" else 45.0,
+                    "source": "historical_reference"
                 }
         
         # Save run log
@@ -197,7 +202,7 @@ def main():
     csv_file = os.path.join(EVAL_DIR, "benchmark_results.csv")
     with open(csv_file, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["agent", "avg_score", "max_score", "waste", "bottleneck_rate", "runtime"])
+        writer.writerow(["agent", "avg_score", "max_score", "waste", "bottleneck_rate", "runtime", "source"])
         for agent in agents:
             writer.writerow([
                 agent, 
@@ -205,7 +210,8 @@ def main():
                 results[agent]["max_score"], 
                 results[agent]["waste"], 
                 results[agent]["bottleneck_rate"], 
-                results[agent]["runtime"]
+                results[agent]["runtime"],
+                results[agent]["source"]
             ])
             
     print("\n==================================================")
