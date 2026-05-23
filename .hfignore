@@ -1,0 +1,8 @@
+chroma_db/
+assets/
+assests/
+evaluation/*.png
+experiments/
+logs/
+*.sqlite3
+*.bin
