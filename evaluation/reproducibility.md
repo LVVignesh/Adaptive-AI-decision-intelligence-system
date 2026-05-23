@@ -79,7 +79,7 @@ python -m server.app
 *Note: Verify that the server is listening at http://127.0.0.1:7860.*
 
 ### Step 4: Run the Evaluation Suite
-You can execute all evaluation scripts. Use the `--episodes` CLI argument to define the scale of the runs (minimum 5 for benchmark truthfulness):
+You can execute all evaluation scripts. Use the `--episodes` CLI argument to define the scale of the runs (recommended minimum = 5 episodes for baseline evaluation):
 ```bash
 # 1. Run the system benchmarking
 python evaluation/benchmark.py --episodes 5
@@ -90,6 +90,8 @@ python evaluation/robustness.py --episodes 5
 # 3. Run the ablation studies
 python evaluation/ablation.py --episodes 5
 ```
+
+**Note on Episode Count**: The default of 5 episodes balances statistical stability with runtime efficiency. Larger episode counts improve confidence intervals and reduce stochastic variance, but increase total evaluation time. See evaluation/config.py::DEFAULT_EPISODES for current settings.
 
 ### Step 5: Compile Report & Charts
 Generate the visualization plots and compile the final summary report:

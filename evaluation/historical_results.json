@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "generated_at": "2026-05-22",
+    "source": "Phase 3 Re-Thesis Results",
+    "description": "Historical benchmark metrics from GPU evaluation. Used as fallback when fine-tuned models unavailable."
+  },
+  "results": {
+    "baseline": {
+      "avg_score": 0.03,
+      "max_score": 0.05,
+      "waste": 75,
+      "bottleneck_rate": 20.0,
+      "runtime": 1.2
+    },
+    "memory": {
+      "avg_score": 0.08,
+      "max_score": 0.10,
+      "waste": 45,
+      "bottleneck_rate": 60.0,
+      "runtime": 2.5
+    },
+    "guarded": {
+      "avg_score": 0.115,
+      "max_score": 0.125,
+      "waste": 0,
+      "bottleneck_rate": 100.0,
+      "runtime": 4.1
+    },
+    "finetuned": {
+      "avg_score": 0.0876,
+      "max_score": 0.11,
+      "waste": 35,
+      "bottleneck_rate": 45.0,
+      "runtime": 5.2
+    },
+    "hybrid": {
+      "avg_score": 0.1315,
+      "max_score": 0.142,
+      "waste": 0,
+      "bottleneck_rate": 100.0,
+      "runtime": 5.8
+    }
+  }
+}

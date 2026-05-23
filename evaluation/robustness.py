@@ -74,11 +74,16 @@ def run_robustness_test(episodes, fuel_limits):
             elapsed_time = time.time() - start_time
             avg_score = np.mean(scores)
             max_score = np.max(scores)
+            score_std = np.std(scores)
+            # 95% CI: mean ± 1.96 * (std / sqrt(n))
+            score_ci95 = 1.96 * (score_std / np.sqrt(len(scores))) if len(scores) > 1 else 0.0
             bottleneck_rate = (bottleneck_cleared / bottleneck_attempts * 100) if bottleneck_attempts > 0 else 100.0
             
             results[fuel] = {
                 "avg_score": float(avg_score),
                 "max_score": float(max_score),
+                "score_std": float(score_std),
+                "score_ci95": float(score_ci95),
                 "waste": int(total_waste),
                 "bottleneck_rate": float(bottleneck_rate),
                 "runtime": float(elapsed_time),
@@ -117,12 +122,14 @@ def main():
     csv_file = os.path.join(EVAL_DIR, "robustness_results.csv")
     with open(csv_file, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["fuel_limit", "avg_score", "max_score", "waste", "bottleneck_rate", "runtime"])
+        writer.writerow(["fuel_limit", "avg_score", "score_std", "score_ci95", "max_score", "waste", "bottleneck_rate", "runtime"])
         for fuel in fuel_limits:
             res = results[fuel]
             writer.writerow([
                 fuel,
                 res["avg_score"],
+                res["score_std"],
+                res["score_ci95"],
                 res["max_score"],
                 res["waste"],
                 res["bottleneck_rate"],
