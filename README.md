@@ -1,15 +1,3 @@
----
-title: Adaptive Crisis AI — Decision Intelligence 
-emoji: 🛡️
-colorFrom: blue
-colorTo: yellow
-sdk: gradio
-sdk_version: "5.32.0"
-python_version: "3.12"
-app_file: app.py
-pinned: false
----
-
 # 🛡️ Adaptive Crisis AI: Strategic Resource Allocation
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
