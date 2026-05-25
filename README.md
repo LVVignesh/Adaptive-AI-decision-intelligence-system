@@ -1,5 +1,4 @@
 ---
----
 title: Adaptive Crisis AI — Decision Intelligence 
 emoji: 🛡️
 colorFrom: blue
@@ -9,7 +8,6 @@ sdk_version: "5.32.0"
 python_version: "3.12"
 app_file: app.py
 pinned: false
----
 ---
 
 # 🛡️ Adaptive Crisis AI: Strategic Resource Allocation
