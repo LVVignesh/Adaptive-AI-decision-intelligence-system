@@ -4,4 +4,7 @@ pandas
 matplotlib
 requests
 python-dotenv
+gradio
+huggingface-hub>=0.16.0,<0.17.0
 plotly
+setuptools
