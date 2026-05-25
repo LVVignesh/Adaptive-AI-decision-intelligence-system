@@ -17,8 +17,22 @@ pinned: false
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![ChromaDB](https://img.shields.io/badge/Memory-ChromaDB-green.svg)](https://www.trychroma.com/)
+[![Hugging Face Spaces](https://img.shields.io/badge/🤗-Live%20Demo-blue.svg)](https://huggingface.co/spaces/lvvignesh2122/Adaptive-AI-System)
 
 An advanced AI decision-intelligence system designed to master complex logistics constraints in high-stakes crisis environments. This project demonstrates a complete **Self-Improving Intelligence Pipeline**: from rule-based bootstrapping to synthetic data generation and LLM fine-tuning.
+
+---
+
+## 🚀 Live Demo
+
+**Try the interactive dashboard:** https://huggingface.co/spaces/lvvignesh2122/Adaptive-AI-System
+
+**Features:**
+- 📊 **Benchmark Dashboard** — Real-time performance metrics for all agent variants
+- 🔍 **Agent Explorer** — Deep-dive into individual agent behaviors and decision patterns
+- 📈 **Comparative Evaluation** — Side-by-side performance analysis across configurations
+
+---
 
 ---
 
@@ -37,8 +51,8 @@ The system is built in three distinct phases of evolution:
     - Captured **180 high-quality trajectories** (900+ transition steps) formatted in **Llama-3 Instruction JSONL**.
 - **Phase 2B:** **LLM Integration & Constraints (The Guarded Agent)**.
     - Swapped heuristic logic for a Groq-powered **Llama-3.1-8b** decision agent.
-    - Built a **Deterministic Constraint Layer** guaranteeing 0% fuel waste and enforcing strict pacing (max 60% fuel per step).
-    - **Benchmark Results:** Achieved **0 Waste** and a **100% Bottleneck Clear Rate**, proving the system is exceptionally safe and stable.
+    - Built a **Deterministic Constraint Layer** designed to eliminate fuel waste while enforcing strict pacing (max 60% fuel per step).
+    - **Benchmark Results:** Observed **0 Waste** and **100% Bottleneck Clear Rate** under evaluated conditions.
 
 ### Phase 3: Knowledge Distillation (Fine-Tuning) ✅
 - **Objective:** Distill the Phase 2 agent's logic into model weights to remove reliance on hard-coded guards.
@@ -62,20 +76,20 @@ The final architecture combines the **Phase 3 Fine-Tuned Brain** with the **Phas
 | **JSON Stability** | **100%** | 💎 **Robust** |
 | **Guardrail Interventions** | **3** | 🧠 **Stabilized** |
 
-> **Key Insight:** By wrapping the fine-tuned model in a deterministic constraint layer, we achieve a **20x performance gain** over the base model while maintaining 100% safety. This Hybrid Agent is the definitive version presented for the Round 2 Re-Thesis.
+> **Key Insight:** By wrapping the fine-tuned model in a deterministic constraint layer, we observe an approximate **4.4x performance improvement** (0.1315 vs. 0.03 baseline score) under evaluated conditions. This Hybrid Agent is the definitive version presented for the Round 2 Re-Thesis.
 >
 > **Experimental Progression:** 
 > Baseline (0.03) ➔ Memory (0.08) ➔ Guarded (0.11) ➔ Fine-Tuned (0.0876) ➔ **Hybrid Agent (0.1315 ✅ Winner)**
 
-### 🖼️ Evidence: Hybrid Agent Evaluation (Google Colab)
+### 🖼️ Evidence: Evaluation Results
 
-#### Round 2: Hybrid Agent (Fine-Tuned + Guardrails)
-![Hybrid Results Part 1](assests/hybrid_fine%20tuned_colab_output_3.png)
-![Hybrid Results Part 2](assests/hybrid_fine_tuned_colab_output_4.png)
+**All benchmark results, visualizations, and comparative analysis are available in the [Live Demo Dashboard](https://huggingface.co/spaces/lvvignesh2122/Adaptive-AI-System).**
 
-#### Previous Phase: Pure Fine-Tuned Agent
-![Phase 3 Results Part 1](assests/fine_tuned_colab_results_1.png)
-![Phase 3 Results Part 2](assests/fine_tuned_colab_results_2.png)
+The dashboard provides:
+- Agent Performance Comparison charts
+- Robustness analysis across fuel constraints
+- Ablation study breakdowns
+- Detailed metrics and statistics
 
 ---
 
@@ -235,6 +249,16 @@ python evaluation/report.py
 - [evaluation/assumptions.md](./evaluation/assumptions.md) — Methodology constraints, historical data origin, model assumptions
 - [evaluation/failure_analysis.md](./evaluation/failure_analysis.md) — Failure modes, root causes, and mitigation strategies
 - [evaluation/CHANGELOG.md](./evaluation/CHANGELOG.md) — Version history and changes to evaluation framework
+
+---
+
+## 🌐 Public Demo
+
+**Explore the deployed system:**
+
+https://huggingface.co/spaces/lvvignesh2122/Adaptive-AI-System
+
+The live demo showcases the complete evaluation platform with interactive dashboards, agent performance metrics, and comparative analysis tools.
 
 ---
 
